@@ -13,21 +13,24 @@ contract RedChatFactory {
 
     event RedEnvelopeDeployed(address indexed envelopeAddress);
 
-    constructor(address _token) {
+    constructor() {
         owner = msg.sender;
-        token = IERC20(_token);
     }
  
    modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
         _;
     }
-    
-    function deployRedEnvelope(address[] memory _whitelist) public {
+
+    function deployRedEnvelope(address _token , address[] memory _whitelist) public returns (address) {
         require(msg.sender == owner, "Only owner can deploy");
+
+        token = IERC20(_token);
         RedEnvelope newEnvelope = new RedEnvelope(address(token), _whitelist);
-        deployedRedEnvelopes.push(address(newEnvelope));
-        emit RedEnvelopeDeployed(address(newEnvelope));
+        address newEnvelopeAddress = address(newEnvelope);
+        deployedRedEnvelopes.push(newEnvelopeAddress);
+        emit RedEnvelopeDeployed(newEnvelopeAddress);
+        return newEnvelopeAddress;
     }
 
     function getAllDeployedContracts() public view returns (address[] memory) {
