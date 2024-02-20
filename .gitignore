@@ -13,3 +13,8 @@ node_modules
 # solidity-coverage files
 /coverage
 /coverage.json
+
+# TypeChain artifacts
+typechain/
+typechain-types/
+
