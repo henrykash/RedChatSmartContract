@@ -1,0 +1,17 @@
+
+export const Config = {
+
+    PRIVATE_KEY: process.env.PRIVATE_KEY!,
+  
+    JSON_RPC_URL_OPBNB: process.env.JSON_RPC_URL_OPBNB!,
+    
+    RED_ENVELOPE_FACTORY_ADDRESS: "0x8d0f767c42832DB73BBCa59494326b7fdAB1f749",
+
+    TEST_ERC20_TOKEN: "0x7bbfa59108b2bad29dE4f357E3C9816D533Ac183",
+
+    TEST_SIGNER: process.env.TEST_SIGNER!
+   
+
+}
+
+   
