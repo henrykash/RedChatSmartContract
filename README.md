@@ -1,6 +1,6 @@
 # RedEnvelope Contracts
 
-- RedEnvelope Contracts and RedEnvelopeFactory COntracts provide a decentralized solution for creating and managing digital red envelopes on EVM chains. Through the contracts,  a user can send a gift inform of a redpacket i.e RedEnvelope to a list of users adddresses, who later claim those assets. This documentation covers how to interact with the RedEnvelopeFactory and RedEnvelope contracts using the ethers.js library.
+- RedEnvelope Contracts and RedEnvelopeFactory Contracts provide a decentralized solution for creating and managing digital red envelopes on EVM chains. Through the contracts,  a user can send a gift inform of a redpacket i.e RedEnvelope to a list of users adddresses, who later claim those assets. This documentation covers how to interact with the RedEnvelopeFactory and RedEnvelope contracts using the ethers.js library.
 
 # Features 
 - RedEnvelope and RedEnvelopeFactory smart contracts
