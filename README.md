@@ -166,64 +166,72 @@ export const REDENVELOPE_FACTORY_ABI = [
 export const REDENVELOPE_ABI = [
   {
     inputs: [
-      {
-        internalType: "address",
-        name: "_token",
-        type: "address",
-      },
-      {
-        internalType: "address[]",
-        name: "_whitelist",
-        type: "address[]",
-      },
+      { internalType: "address", name: "_token", type: "address" },
+      { internalType: "address[]", name: "_whitelist", type: "address[]" },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
   },
   {
     inputs: [
-      {
-        internalType: "address",
-        name: "_userAddress",
-        type: "address",
-      },
+      { internalType: "address", name: "_userAddress", type: "address" },
     ],
-    name: "claimTokens",
+    name: "claimEqualAmount",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+      { internalType: "address", name: "_userAddress", type: "address" },
     ],
-    name: "hasClaimed",
+    name: "claimRandomToken",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "claimants",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "", type: "address" }],
+    name: "claimedAmounts",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getClaimantsAndAmounts",
     outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
+      { internalType: "address[]", name: "", type: "address[]" },
+      { internalType: "uint256[]", name: "", type: "uint256[]" },
     ],
     stateMutability: "view",
     type: "function",
   },
   {
+    inputs: [{ internalType: "address", name: "user", type: "address" }],
+    name: "getClaimedAmount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "", type: "address" }],
+    name: "hasClaimed",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
-      {
-        internalType: "address",
-        name: "_owner",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "_tokenAmount",
-        type: "uint256",
-      },
+      { internalType: "address", name: "_owner", type: "address" },
+      { internalType: "uint256", name: "_tokenAmount", type: "uint256" },
     ],
     name: "initialize",
     outputs: [],
@@ -233,45 +241,35 @@ export const REDENVELOPE_ABI = [
   {
     inputs: [],
     name: "token",
-    outputs: [
-      {
-        internalType: "contract IERC20",
-        name: "",
-        type: "address",
-      },
-    ],
+    outputs: [{ internalType: "contract IERC20", name: "", type: "address" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [],
     name: "totalTokens",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
+    inputs: [],
+    name: "totalWhitelistedUsers",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "usersClaimed",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "", type: "address" }],
     name: "whitelisted",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
     stateMutability: "view",
     type: "function",
   },
@@ -284,32 +282,17 @@ export const REDENVELOPE_ABI = [
 Here is an example of how I created mine. Feel free to re-use the Logic or modify it to fit your useCase.
 
 ```shell
-import { Contract, Wallet, ethers, providers, utils } from "ethers";
-import { Config } from "../config/config";
+import { Contract, Wallet, ethers, providers } from "ethers";
 import {
   REDENVELOPE_ABI,
   REDENVELOPE_FACTORY_ABI,
 } from "../constants/constants";
 class Helpers {
-  private _provider: providers.JsonRpcProvider;
-  private _signer: Wallet;
-  private _claimWalletSIgner: Wallet;
-  constructor() {
-    this._provider = new providers.JsonRpcProvider(Config.JSON_RPC_URL_OPBNB);
-    this._signer = new Wallet(Config.PRIVATE_KEY, this._provider).connect(
-      this._provider
-    );
+  constructor() {}
 
-    this._claimWalletSIgner = new Wallet(
-      Config.TEST_SIGNER,
-      this._provider
-    ).connect(this._provider);
-  }
-
-  approveContract = async (privateKey: any, tokenAddress: string) => {
-    const account = new Wallet(privateKey, this._provider).connect(
-      this._provider
-    );
+  approveContract = (tokenAddress: string, signer: any, urlRpc: string) => {
+    const provider = new providers.JsonRpcProvider(urlRpc);
+    const account = new Wallet(signer, provider).connect(provider);
 
     return new Contract(
       tokenAddress,
@@ -320,189 +303,414 @@ class Helpers {
     );
   };
 
-  deployRedEnvelope = async (whitelist: string[]): Promise<void> => {
+  redEnvelopeFactoryContract = (
+    factoryAddress: string,
+    signer: any,
+    rpcUrl: string
+  ) => {
+    const provider = new providers.JsonRpcProvider(rpcUrl);
+    const account = new Wallet(signer, provider).connect(provider);
+
+    return new Contract(factoryAddress, REDENVELOPE_FACTORY_ABI, account);
+  };
+
+  redEnvelopeContract = (
+    redEnvelopeAddress: string,
+    signer: any,
+    rpcUrl: any
+  ) => {
+    const provider = new providers.JsonRpcProvider(rpcUrl);
+    const account = new ethers.Wallet(signer, provider).connect(provider);
+
+    return new Contract(redEnvelopeAddress, REDENVELOPE_ABI, account);
+  };
+
+  deployRedEnvelope = async (
+    deploymentCreds: {
+    factoryAddress: string;
+    ownerAddress: string;
+    whitelist: string[];
+    tokenAmount: any;
+    tokenAddress: string;
+    signer: any;
+    rpcUrl: string;
+  }): Promise<{
+    deployedEnvelopeAddress: string;
+    initializeTxHash: string;
+  }> => {
     try {
-      const redChatFactory = new Contract(
-        Config.RED_ENVELOPE_FACTORY_ADDRESS,
-        REDENVELOPE_FACTORY_ABI,
-        this._signer
+      const {
+        factoryAddress,
+        ownerAddress,
+        whitelist,
+        tokenAmount,
+        tokenAddress,
+        signer,
+        rpcUrl,
+      } = deploymentCreds;
+
+      const redChatFactory = this.redEnvelopeFactoryContract(
+        factoryAddress,
+        signer,
+        rpcUrl
       );
 
-      const deployedEnvelopeTx = await redChatFactory.deployRedEnvelope(
-        Config.TEST_ERC20_TOKEN,
+      //1. Factory Deploys the RedEnvelope
+      const deployedEnvelope = await redChatFactory.deployRedEnvelope(
+        tokenAddress,
         whitelist
       );
 
-      // Wait for the transaction to be mined
-      const receipt = await deployedEnvelopeTx.wait();
+      // Wait for the transaction to be processed
+      const receipt = await deployedEnvelope.wait();
 
-      if (receipt) {
-
+      if (receipt && receipt.events) {
         // Filter the logs for the RedEnvelopeDeployed event
-        const redEnvelopeDeployedEvent = receipt.events?.filter(
+        const redEnvelopeDeployedEvent = receipt.events.filter(
           (x: { event: string }) => x.event === "RedEnvelopeDeployed"
         );
-        console.log("redEnvelopeDeployedEvent", redEnvelopeDeployedEvent);
 
-        if (redEnvelopeDeployedEvent && redEnvelopeDeployedEvent.length > 0) {
+        if (redEnvelopeDeployedEvent.length > 0) {
           // Extracting the deployed address from the event's arguments
           const deployedEnvelopeAddress =
             redEnvelopeDeployedEvent[0].args.envelopeAddress;
-          console.log("RedEnvelope deployed at:", deployedEnvelopeAddress);
 
-          return deployedEnvelopeAddress
+          // 2. Call the initialize function from the Deployed RedEnvelope Contract
+          const amount = ethers.utils.parseUnits(tokenAmount.toString());
+
+          console.log("amount*********", amount)
+
+          const initializeTxHash = await this.initializeRedEnvelope(
+            ownerAddress,
+            deployedEnvelopeAddress,
+            amount,
+            tokenAddress,
+            signer,
+            rpcUrl
+          );
+
+          
+
+            // console.log("initializeTxHash", initializeTxHash)
+          return { deployedEnvelopeAddress, initializeTxHash };
         } else {
-          console.log("RedEnvelopeDeployed event not found");
+          throw new Error("RedEnvelopeDeployed event not found");
         }
+      } else {
+        throw new Error("Transaction receipt not found");
       }
-    } catch (error) {
-      console.error("Unable to deploy new RedEnvelope", error);
-      throw error;
-    }
-  };
-
-
-  getALLDeployedContracts = async () => {
-    try {
-      const redChatFactory = new Contract(
-        Config.RED_ENVELOPE_FACTORY_ADDRESS,
-        REDENVELOPE_FACTORY_ABI,
-        this._provider
-      );
-
-      const deployedContracts = await redChatFactory.getAllDeployedContracts();
-
-      if(deployedContracts) {
-        return deployedContracts;
-      }
-    } catch (error) {
+    } catch (error: any) {
+      // error = this.parseError(error);
+      // return error;
       throw error;
     }
   };
 
   initializeRedEnvelope = async (
-    owner: string,
+    ownerAddress: string,
     redEnvelopeAddress: string,
-    tokenAmount: any
-  ) => {
+    tokenAmount: any,
+    tokenAddress: string,
+    signer: any,
+    rpcUrl: string
+  ): Promise<string> => {
     try {
-      const redEnvelope = new Contract(
+      // Initialize contract instance for the redEnvelope Contract
+      const redEnvelope = this.redEnvelopeContract(
         redEnvelopeAddress,
-        REDENVELOPE_ABI,
-        this._signer
+        signer,
+        rpcUrl
       );
 
       // Approve the RedEnvelope contract to spend tokens
       const approveTx = await this.approve(
         redEnvelopeAddress,
-        Config.TEST_ERC20_TOKEN,
-        tokenAmount
+        tokenAddress,
+        tokenAmount,
+        signer,
+        rpcUrl
       );
-      
 
-      if (approveTx) {
-        // Initialize the RedEnvelope
-        const nonce = await this._provider.getTransactionCount(owner)
+      // Check if approveTx  was successful
+      if (approveTx.success == true) {
 
-        console.log("nonce", nonce)
-        const initializeTx = await redEnvelope.initialize(owner, tokenAmount, {
-            nonce: nonce,
-            gasLimit: 300000
-        });
+        const provider = new providers.JsonRpcProvider(rpcUrl);
 
-        if (initializeTx) {
-          console.log("RedEnvelope initialized with tokens", initializeTx.hash);
-          return initializeTx;
+        const nonce = await provider.getTransactionCount(
+          ownerAddress,
+          'latest'
+        );
+
+        console.log("Nonce", nonce)
+  
+
+        const initializeTx = await redEnvelope.initialize(
+          ownerAddress,
+          tokenAmount,
+          {
+             nonce: nonce + 1,
+            gasLimit: 300000, // TODO  You might need to adjust gasLimit based on the operation's requirements OR allow ethers to calculate it automatically
+          }
+        );
+
+
+        console.log("initializeTx****", initializeTx.hash)
+
+        if (initializeTx && initializeTx.hash ) {
+          return initializeTx.hash; // Return the transaction hash
+        } else {
+          throw new Error("Initialization transaction failed");
         }
+      } else {
+        throw new Error("Approval transaction failed");
       }
-    } catch (error) {
-      console.log("unable to initializeRedEnvelope", error);
+    } catch (error: any) {
+      // error = this.parseError(error);
+      // return error;
+
       throw error;
     }
   };
 
-  userClaimTokens = async (
+  userClaimEqualTokens = async (
     redEnvelopeAddress: string,
-    claimerWallet: string
+    claimerAddress: string,
+    signer: any,
+    urlRpc: string
   ) => {
     try {
+      const provider = new providers.JsonRpcProvider(urlRpc);
+      const account = new Wallet(signer, provider).connect(provider);
+
       const redEnvelope = new Contract(
         redEnvelopeAddress,
         REDENVELOPE_ABI,
-        this._claimWalletSIgner
+        account
       );
-      const calimTx = await redEnvelope.claimTokens(claimerWallet);
+       
+      const _userAddress = claimerAddress
+      const calimTx = await redEnvelope.claimEqualAmount(
+        _userAddress,
+      );
 
-      if (calimTx) {
-        console.log("successful user claim tokens", calimTx);
-
-        return calimTx
-      }
+   if(claimTx){
+     return calimTx.hash
+   }
     } catch (error) {
-      console.log("User unable to claim tokens", error);
       throw error;
+      // error = this.parseError(error);
+      // return error;
     }
   };
 
-  checkEnvelopeContractBalance = async(deployedRedEnvelope: string)=> {
+  userClaimRandomTokens = async (
+    redEnvelopeAddress: string,
+    claimerAddress: string,
+    signer: any,
+    urlRpc: string
+  ) => {
     try {
-        const redChatFactory = new Contract(
-            Config.RED_ENVELOPE_FACTORY_ADDRESS,
-            REDENVELOPE_FACTORY_ABI,
-            this._provider
-          );
+      const provider = new providers.JsonRpcProvider(urlRpc);
+      const account = new Wallet(signer, provider).connect(provider);
 
-          const envBalance = await redChatFactory.checkBalanceOfDeployedContract(deployedRedEnvelope)
+      const redEnvelope = new Contract(
+        redEnvelopeAddress,
+        REDENVELOPE_ABI,
+        account
+      );
 
-          if(envBalance) {
-
-            console.log("successful balance: ", envBalance)
-            return ethers.utils.formatUnits(envBalance)
-          }
-        
-    } catch (error) {
-        throw error;
-    }
-  }
-
-  approve = async (redEnvelopeAddress: string, tokenAddress: string, amount: any) => {
-    try {
-      const MAX_INT = amount ;
-
-      const contract = await this.approveContract(this._signer, tokenAddress);
-      const transaction = await contract.approve(redEnvelopeAddress, MAX_INT);
-
-
-      const receipt = await transaction.wait()
-
-      if(receipt) {
-        console.log("******APPROVE TRANSACTION********", transaction.hash);
-        return { success: true, data: `${transaction.hash}` };
+      const calimTx = await redEnvelope.claimRandomToken(claimerAddress);
+      if (calimTx ) {
+        return calimTx.hash;
       }
-
     } catch (error) {
-      console.log("Approve Transaction Failed", error);
+      console.error("User unalbe to claim Random Tokens", error)
+      error = this.parseError(error);
+      return error;
+    }
+  };
+
+  getALLDeployedContracts = async (factoryAddress: string, rpcUrl: string) => {
+    try {
+      const provider = new providers.JsonRpcProvider(rpcUrl);
+      const redChatFactory = new Contract(
+        factoryAddress,
+        REDENVELOPE_FACTORY_ABI,
+        provider
+      );
+
+      const deployedContracts = await redChatFactory.getAllDeployedContracts();
+
+      if (deployedContracts) {
+        return deployedContracts;
+      }
+    } catch (error) {
+      error = this.parseError(error);
+      return error;
+    }
+  };
+
+  deployedRedEnvelopeContractBalance = async (
+    deployedRedEnvelope: string,
+    factoryAddress: string,
+    rpcUrl: string
+  ) => {
+    try {
+      const provider = new providers.JsonRpcProvider(rpcUrl);
+      const redChatFactory = new Contract(
+        factoryAddress,
+        REDENVELOPE_FACTORY_ABI,
+        provider
+      );
+
+      const balance = await redChatFactory.checkBalanceOfDeployedContract(
+        deployedRedEnvelope
+      );
+
+      if (balance) {
+        return ethers.utils.formatUnits(balance);
+      }
+    } catch (error) {
+      error = this.parseError(error);
+      return error;
+    }
+  };
+
+  getUserClaimedAmount = async (
+    redEnvelopeAddress: string,
+    claimAddress: string,
+    rpcUrl: string
+  ) => {
+    try {
+      const provider = new providers.JsonRpcProvider(rpcUrl);
+      const redEnvelope = new Contract(
+        redEnvelopeAddress,
+        REDENVELOPE_ABI,
+        provider
+      );
+
+      const userDetails = await redEnvelope.getClaimedAmount(claimAddress);
+
+      if (userDetails) {
+        return ethers.utils.formatUnits(userDetails);
+      }
+    } catch (error) {
+      error = this.parseError(error);
+      return error;
+    }
+  };
+
+  getAllUsersClaimDetails = async (redEnvelopeAddress: string, rpcUrl: string) => {
+    try {
+      const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+  
+      const redEnvelope = new ethers.Contract(
+        redEnvelopeAddress,
+        REDENVELOPE_ABI,
+        provider
+      );
+  
+      // Fetching claimants and their claimed amounts
+      const [claimants, amounts] = await redEnvelope.getClaimantsAndAmounts();
+  
+      // Pairing each claimant address with the corresponding amount claimed
+      const allDetails = claimants.map((address: any, index: string | number) => ({
+        address: address,
+        amount: ethers.utils.formatUnits(amounts[index])
+      }));
+  
+      return allDetails;
+    } catch (error) {
+      console.error("Error fetching claim details:", error);
+      // Assuming parseError is a custom method to format error messages
+      return this.parseError(error);
+    }
+  };
+  
+
+  approve = async (
+    redEnvelopeAddress: string,
+    tokenAddress: string,
+    tokenAmount: any,
+    signer: string,
+    rpcUrl: string
+  ) => {
+    try {
+      const contract = this.approveContract(tokenAddress, signer, rpcUrl);
+
+      const transaction = await contract.approve(
+        redEnvelopeAddress,
+        tokenAmount
+      );
+
+        console.log("APPROVE", transaction.hash)
+        return { success: true, data: `${transaction.hash}` };
+    
+    } catch (error) {
       return { success: false, data: `${error}` };
     }
+  };
+
+  /**
+   *
+   * @param error the error to be logged
+   * @returns
+   */
+  parseError = (error: any) => {
+    let msg = "";
+    try {
+      error = JSON.parse(JSON.stringify(error));
+      msg =
+        error?.error?.reason ||
+        error?.reason ||
+        JSON.parse(error)?.error?.error?.response?.error?.message ||
+        error?.response ||
+        error?.message ||
+        error;
+    } catch (_error: any) {
+      msg = error;
+    }
+
+    return msg;
   };
 }
 
 export const HelpersWrapper = new Helpers();
 
+
 ```
 
 # How to make the contract calls to the functions above
 - We are almost done, now we want to interact with our functions.
-- Lets's see how we can use the HelpersWrapper abocve  to  `deployRedEnvelope`
+- Lets's see how we can use the HelpersWrapper above  to  `deployRedEnvelope`
 
 ```shell
 const main = async()=>{
-    const whitelist = [
+   const whitelist = [
     "0x81443057e6553D5CacEE656E3e8b71b52998db14",
     "0x86bc300654DE52620bB871E8B0922e52d4a06E43",
+    "0x68601FCb114F5480D20c0338a63411aaDfe7c9ce"
   ];
-  const deployRedEnv = await HelpersWrapper.deployRedEnvelope(whitelist)
-  console.log({ deployRedEnv });
+
+  const factoryAddress = Config.RED_ENVELOPE_FACTORY_ADDRESS
+  const rpcUrl = Config.JSON_RPC_URL_OPBNB
+  const tokenAddress = Config.TEST_ERC20_TOKEN
+  const signer = Config.PRIVATE_KEY
+  const ownerAddress = "0x05A7c5db4bEce0aBBFE9C576554cf4f08C671b5b";
+  const tokenAmount = 1000;
+
+   const deployCreds = {
+    factoryAddress,
+    ownerAddress,
+    whitelist,
+    tokenAmount, 
+    tokenAddress,
+    signer,
+    rpcUrl
+  }
+  
+  const deployRedEnvelope = await HelpersWrapper.deployRedEnvelope(deployCreds)
+  console.log(deployRedEnvelope );
 }
 main()
 ```
@@ -510,50 +718,130 @@ main()
 - Response 
 
 ```shell
- { deployENv: '0xA4BdCA56ebac0A78C554F651a5D026b4736D93c9' }
+ deployRedEnvelope: {
+    deployedEnvelopeAddress: '0x0681F9cDeA1c44D943df308B71D2Fed1d210AfAc',
+    initializeTxHash: '0x2a9a1b54ec94147eeb5843a95e67023f5acc21ed11230cf0dbfb8e501b0be33e'
+  }
 ```
 
-- Now lets call the `initializeRedEnvelope` in our HelpersWrapper above . This function internally calls `approve` function which makes the RedEnvelope Contract deployed 
- above the spender. It allows RedEnvelope contract to spend on behalf of the owner ,some Test ERC20 tokens for users to claim . After succesful `approve` transaction ,
+- NOTE : Inside the deployRedEnvelope function above internally we call the `initializeRedEnvelope` and  `approve` function which makes the 
+(deployedEnvelopeAddress) RedEnvelope Contract deployed the spender.
+ It allows RedEnvelope contract (deployedEnvelopeAddress) to spend on behalf of the owner ,some Test ERC20 tokens for users to claim . After succesful `approve` transaction 
  the  `initialiaze` RedEnvelope Conrtact function is called  which `transfersFrom` from the owner wallet to the RedEnvelope contract the `approved token amounts`.
 
+# userClaimEqualTokens
 ```shell
 const main = async()=>{
-  const deployedRedEnvelope = "0xA4BdCA56ebac0A78C554F651a5D026b4736D93c9";
-  const owner = "0x05A7c5db4bEce0aBBFE9C576554cf4f08C671b5b";
-  const tokenAount = ethers.utils.parseUnits("0.009"); // of the test erc20 tokens owner minted for the test
-  const initialize = await HelpersWrapper.initializeRedEnvelope(owner, deployedRedEnvelope, tokenAount
-  console.log({initialize})
+ const redEnvelopeAddress = "0xCa3F296B3AC1372EE3C82BB8E61a44b8fa17414F";
+ const claimAddress1 = "0x81443057e6553D5CacEE656E3e8b71b52998db14";
+ const testSigner1 = Config.TEST_SIGNER 
+ const rpcUrl = Config.JSON_RPC_URL_OPBNB
+  const claim = await HelpersWrapper.userClaimEqualTokens(
+    redEnvelopeAddress,
+    claimAddress1,
+    testSigner1,
+    rpcUrl
+  )
+ console.log({claim});
 }
+
 main()
 ```
 
 - Response 
 ```shell
+
 {
-  initialize: {
-    type: 2,
-    chainId: 97,
-    nonce: 20,
-    maxPriorityFeePerGas: BigNumber { _hex: '0x59682f00', _isBigNumber: true },
-    maxFeePerGas: BigNumber { _hex: '0x59682f00', _isBigNumber: true },
-    gasPrice: null,
-    gasLimit: BigNumber { _hex: '0x0493e0', _isBigNumber: true },
-    to: '0x6F297fEa8F7b37960Ffa18095E252A34bc6fa8FA',
-    value: BigNumber { _hex: '0x00', _isBigNumber: true },
-    data: '0xcd6dc68700000000000000000000000005a7c5db4bece0abbfe9c576554cf4f08c671b5b000000000000000000000000000000000000000000000000001ff973cafa8000',
-    accessList: [],
-    hash: '0xc956ade4f6c9f4431fa43b7875048aa826987126655ff856250a93dcdf875670',
-    v: 0,
-    r: '0x635043a62406e61f19dde11a19ba1f3cdde63c54d8c2964e45b4b2c21036e5c9',
-    s: '0x0215bceaed3c646e569ce7867aac7d98ff18a961b85d5eb9b6ae339d0dc0bc26',
-    from: '0x05A7c5db4bEce0aBBFE9C576554cf4f08C671b5b',
-    confirmations: 0,
-    wait: [Function (anonymous)]
-  }
+  claim: '0xbaaa5f155d452ce37862e9d2d66fc419eb30b4235f3ca02dfac1286f32c40327'
+}
+```
+
+
+# userClaimRandomTokens
+```shell
+const main = async()=>{
+ const redEnvelopeAddress = "0xCa3F296B3AC1372EE3C82BB8E61a44b8fa17414F";
+ const claimAddress1 = "0x81443057e6553D5CacEE656E3e8b71b52998db14";
+ const testSigner1 = Config.TEST_SIGNER 
+ const rpcUrl = Config.JSON_RPC_URL_OPBNB
+  const claim = await HelpersWrapper.userClaimRandomTokens(
+    redEnvelopeAddress,
+    claimAddress1,
+    testSigner1,
+    rpcUrl
+  )
+ console.log({claim});
 }
 
-here is the transactionHash : https://testnet.bscscan.com/tx/0xc956ade4f6c9f4431fa43b7875048aa826987126655ff856250a93dcdf875670
+main()
+```
+
+- Response 
+```shell
+
+{
+  claim: '0xbaaa5f155d452ce37862e9d2d66fc419eb30b4235f3ca02dfac1286f32c40327'
+}
+```
+# getAllUserDetails
+```shell
+const main = async()=>{
+ const redEnvelopeAddress = "0xCa3F296B3AC1372EE3C82BB8E61a44b8fa17414F";
+const rpcUrl = Config.JSON_RPC_URL_OPBNB
+const getAllUserDetails = await HelpersWrapper.getAllUsersClaimDetails(
+    redEnvelopeAddress,
+    rpcUrl
+  )
+ 
+ console.log({getAllUserDetails});
+}
+
+main()
+```
+
+- Response 
+```shell
+
+{
+  getAllUSerDetails: [
+    {
+      address: '0x81443057e6553D5CacEE656E3e8b71b52998db14',
+      amount: '590.0'
+    },
+    {
+      address: '0x86bc300654DE52620bB871E8B0922e52d4a06E43',
+      amount: '102.5'
+    },
+    {
+      address: '0x68601FCb114F5480D20c0338a63411aaDfe7c9ce',
+      amount: '101.475'
+    }
+  ]
+}
+```
+
+# getUserClaimedAmount
+```shell
+const main = async()=>{
+ const redEnvelopeAddress = "0xCa3F296B3AC1372EE3C82BB8E61a44b8fa17414F";
+ claimAddress1 = "0x81443057e6553D5CacEE656E3e8b71b52998db14"
+ const rpcUrl = Config.JSON_RPC_URL_OPBNB
+
+  const getClaimAmount = await HelpersWrapper.getUserClaimedAmount(
+  redEnvelopeAddress, 
+  claimAddress1 ,
+  rpcUrl
+  )
+ console.log({getClaimAmount});
+}
+
+main()
+```
+
+- Response 
+```shell
+{ getClaimAmount: '590.0' }
+
 ```
 
 # Finit0!!!
