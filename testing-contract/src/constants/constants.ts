@@ -552,7 +552,6 @@ export const REDENVELOPE_ABI = [
   },
 ];
 
-
 export const PANCAKESWAP_PAIR_ABI = [
   {
     constant: false,

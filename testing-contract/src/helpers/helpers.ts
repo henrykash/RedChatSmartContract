@@ -82,7 +82,6 @@ class Helpers {
         signer,
         rpcUrl
       );
-
       //1. Factory Deploys the RedEnvelope
       const deployedEnvelope = await redChatFactory.deployRedEnvelope(
         ownerAddress
@@ -101,6 +100,9 @@ class Helpers {
           // Extracting the deployed address from the event's arguments
           const deployedEnvelopeAddress =
             redEnvelopeDeployedEvent[0].args.envelopeAddress;
+
+
+            console.log("deployedEnvelopeAddress", deployedEnvelopeAddress)
 
           // 2. Call the initialize function from the Deployed RedEnvelope Contract
           const tokenAmount = ethers.utils.parseUnits(amount.toString());
@@ -125,8 +127,10 @@ class Helpers {
         throw new Error("Transaction receipt not found");
       }
     } catch (error: any) {
-      error = this.parseError(error);
-      return error;
+      // error = this.parseError(error);
+      // return error;
+
+      throw error;
     }
   };
 
@@ -217,6 +221,7 @@ class Helpers {
     rpcUrl: string
   ): Promise<string> => {
     try {
+
       // Initialize contract instance for the redEnvelope Contract
       const redEnvelope = this.redEnvelopeContract(
         redEnvelopeAddress,
@@ -227,6 +232,7 @@ class Helpers {
       let initializeTx;
 
       if (isRandom) {
+
         const approveTx = await this.approve(
           redEnvelopeAddress,
           tokenAddress,
@@ -244,6 +250,8 @@ class Helpers {
             "latest"
           );
 
+          console.log("approveTx", approveTx)
+
           const _token = tokenAddress;
           const _tokenAmount = tokenAmount;
           const _whitelist = whiteList;
@@ -256,8 +264,11 @@ class Helpers {
             _quantity,
             {
               nonce: nonce + 1,
+              gasLimit: 200000
             }
           );
+
+          // console.log("initializeTx", initializeTx)
 
           if (initializeTx && initializeTx.hash) {
             initializeTx.hash;
@@ -271,6 +282,8 @@ class Helpers {
           signer,
           rpcUrl
         );
+
+        console.log("approveTx", approveTx)
 
         if (approveTx.success == true) {
           const provider = new providers.JsonRpcProvider(rpcUrl);
@@ -292,6 +305,7 @@ class Helpers {
             _quantity,
             {
               nonce: nonce + 1,
+              // gasLimit: 5000000
             }
           );
 
@@ -302,8 +316,10 @@ class Helpers {
       }
       return initializeTx.hash;
     } catch (error: any) {
-      error = this.parseError(error);
-      return error;
+      // error = this.parseError(error);
+      // return error;
+
+      throw error;
     }
   };
 
@@ -391,8 +407,9 @@ class Helpers {
         return claimTx.hash;
       }
     } catch (error) {
-      error = this.parseError(error);
-      return error;
+      // error = this.parseError(error);
+      // return error;
+      throw error;
     }
   };
 
@@ -446,8 +463,9 @@ class Helpers {
         return claimTx.hash;
       }
     } catch (error) {
-      error = this.parseError(error);
-      return error;
+      // error = this.parseError(error);
+      // return error;
+      throw error;
     }
   };
 
@@ -996,40 +1014,36 @@ class Helpers {
     }
   }
 
-  getUICTokenBalance = async (
-    walletAddress: string,
-    rpcUrl: string
-  ) => {
+  getUICTokenBalance = async (walletAddress: string, rpcUrl: string) => {
     try {
-
       const provider = new providers.JsonRpcProvider(rpcUrl);
       const contract = new Contract(
         Config.OPBNB_UICTOKEN_ADDRESS_MAINNET,
         ["function balanceOf(address account) public view returns(uint256)"],
         provider
       );
-
       const balance = await contract.balanceOf(walletAddress);
-      const formatedBalance = ethers.utils.formatUnits(balance)
-
-      console.log("Token Balance", formatedBalance)
-
-      if (balance > 0) {
-        const priceperToken  = await this.calculatePriceOfUICToken(
-          Config.OPBNB_UICTOKEN_ADDRESS_MAINNET,
-          Config.OPBBNB_USDT_ADDRESS_MAINNET,
-          Config.OPBNB_UNISWAPV2_FACTORY_ADDRESS_MAINNET,
-          rpcUrl
-        )
-
-        if(priceperToken){
-
-          console.log("priceperToken", priceperToken)
-          const tokenBalanceInUSDT = Number(formatedBalance) * Number(priceperToken)
-          console.log("tokenBalanceInUSDT", tokenBalanceInUSDT)
-          return tokenBalanceInUSDT.toFixed(2)
-
-        }
+      const formatedBalance = ethers.utils.formatUnits(balance);
+      console.log("Token Balance", formatedBalance);
+  
+      // Check if the balance is zero
+      if (balance.isZero()) {
+        console.log("Wallet has 0 tokens.");
+        return "0.00";
+      }
+  
+      const priceperToken = await this.calculatePriceOfUICToken(
+        Config.OPBNB_UICTOKEN_ADDRESS_MAINNET,
+        Config.OPBBNB_USDT_ADDRESS_MAINNET,
+        Config.OPBNB_UNISWAPV2_FACTORY_ADDRESS_MAINNET,
+        rpcUrl
+      );
+  
+      if (priceperToken) {
+        console.log("priceperToken", priceperToken);
+        const tokenBalanceInUSDT = Number(formatedBalance) * Number(priceperToken);
+        console.log("tokenBalanceInUSDT", tokenBalanceInUSDT);
+        return tokenBalanceInUSDT.toFixed(2);
       }
     } catch (error) {
       throw error;
